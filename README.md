@@ -44,3 +44,15 @@ A VSCode-style explorer sits left of the editor; sketches are stored in `localSt
 A ● marks unsaved changes (for untitled, anything other than the starter code); switching sketches with unsaved changes asks first.
 
 Sketches are shared between open tabs: a save in one shows up in the others, and a sketch deleted elsewhere becomes untitled in tabs that had it open. If the stored sketches can't be parsed, they're moved aside to a `hydra-jail:sketches:corrupt-<timestamp>` key rather than overwritten.
+
+## Development
+
+The app is still just `index.html`; `package.json` only holds the test tooling.
+
+```sh
+npm install
+npm test                # Playwright, against the installed Google Chrome
+npx playwright test -g render   # a subset
+```
+
+Tests use installed Chrome (`channel: 'chrome'`) because Playwright's bundled Chromium usually can't encode H.264. They run offline: every request is answered from the repo or from the CDN copies in `tests/vendor/`, and any request without a copy fails the test. After changing a library version in `index.html`, run `npm run vendor` to refresh the copies.

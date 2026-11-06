@@ -1,0 +1,12 @@
+{
+  "name": "hydra-jail",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "vendor": "node tests/fetch-vendor.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0"
+  }
+}
