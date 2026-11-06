@@ -3,6 +3,9 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
+  // Source, including the index.html entry, lives in src/; the only page outside it is the built dist/index.html.
+  root: 'src',
+  build: { outDir: '../dist', emptyOutDir: true },
   // Everything, fonts included, is inlined into dist/index.html, so it also works opened from file://.
   plugins: [viteSingleFile()],
   resolve: {

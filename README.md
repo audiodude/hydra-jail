@@ -47,7 +47,7 @@ Sketches are shared between open tabs: a save in one shows up in the others, and
 
 ## Development
 
-Source is `index.html` (markup) plus `src/`; libraries come from npm and [Vite](https://vite.dev) bundles everything into `dist/index.html` with `vite-plugin-singlefile`.
+All source lives in `src/`, including `src/index.html` (the markup and Vite's entry point; it doesn't work opened directly). Libraries come from npm and [Vite](https://vite.dev) bundles everything into `dist/index.html` with `vite-plugin-singlefile`.
 
 | File | Contents |
 | --- | --- |
