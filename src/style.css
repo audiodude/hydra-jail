@@ -1,0 +1,45 @@
+/* Latin subset, woff only (smaller than the woff2 build here, and supported everywhere), inlined into the build. */
+@font-face { font-family: 'Ubuntu Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('@fontsource/ubuntu-mono/files/ubuntu-mono-latin-400-normal.woff') format('woff'); }
+@font-face { font-family: 'Ubuntu Mono'; font-style: normal; font-weight: 700; font-display: swap; src: url('@fontsource/ubuntu-mono/files/ubuntu-mono-latin-700-normal.woff') format('woff'); }
+@font-face { font-family: 'Ubuntu Mono'; font-style: italic; font-weight: 400; font-display: swap; src: url('@fontsource/ubuntu-mono/files/ubuntu-mono-latin-400-italic.woff') format('woff'); }
+
+html, body { margin: 0; background: #111; color: #ccc; font: 13px/1.4 monospace; }
+#stage { width: 100%; max-width: 1920px; margin: 0 auto; }
+#stage.actual { width: 1920px; max-width: none; }
+canvas { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; }
+#bar { display: flex; gap: 12px; align-items: center; max-width: 1920px; margin: 0 auto; padding: 4px 8px; box-sizing: border-box; }
+#tab { color: #fff; }
+#tab.dirty::after { content: ' ●'; color: #aaa; }
+#status { flex: 1; white-space: pre-wrap; }
+#status.err { color: #f66; }
+button { background: #222; color: #ccc; border: 1px solid #444; font: inherit; padding: 2px 8px; cursor: pointer; }
+button:disabled { opacity: .4; cursor: default; }
+#record.on, #render.on { color: #fff; background: #a00; border-color: #f44; }
+#render-secs { width: 4em; background: #222; color: #ccc; border: 1px solid #444; font: inherit; padding: 2px 4px; }
+
+#workbench { display: flex; height: 40vh; max-width: 1920px; margin: 0 auto; font-family: system-ui, sans-serif; }
+#activity { width: 48px; flex: none; background: #333; display: flex; flex-direction: column; align-items: center; }
+#activity button { width: 48px; height: 48px; border: 0; border-left: 2px solid transparent; background: none; color: #858585; padding: 0; }
+#activity button:hover { color: #fff; }
+#activity button.on { color: #fff; border-left-color: #fff; }
+#explorer { width: 240px; flex: none; background: #252526; display: flex; flex-direction: column; overflow: hidden; }
+#explorer.closed { display: none; }
+#explorer header { display: flex; align-items: center; height: 35px; padding: 0 8px 0 20px; font-size: 11px; letter-spacing: .05em; color: #bbb; }
+#explorer header span { flex: 1; }
+#explorer header button, #sketch-list button { border: 0; background: none; color: #ccc; padding: 0 4px; font-size: 15px; line-height: 1; }
+#explorer header button:hover, #sketch-list button:hover { color: #fff; }
+#sketch-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; }
+#sketch-list li { display: flex; align-items: center; height: 22px; padding: 0 8px 0 20px; cursor: pointer; color: #ccc; border: 1px solid transparent; }
+#sketch-list li:hover { background: #2a2d2e; }
+#sketch-list li.active { background: #37373d; color: #fff; }
+#sketch-list li .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#sketch-list li.dirty .name::after { content: ' ●'; color: #aaa; }
+#sketch-list li .actions { display: none; }
+#sketch-list li:hover .actions { display: flex; }
+#sketch-list li.editing { padding-left: 16px; }
+#sketch-list input { flex: 1; min-width: 0; background: #3c3c3c; color: #fff; border: 1px solid #007fd4; outline: 0; font: inherit; padding: 0 4px; }
+#sketch-list input.invalid { border-color: #be1100; }
+#sketch-list .empty { padding: 4px 20px; color: #888; cursor: default; }
+
+#editor { flex: 1; min-width: 0; }
+.CodeMirror { height: 100%; font-family: 'Ubuntu Mono', monospace; font-size: 17px; }

@@ -1,37 +1,27 @@
 import { test as base, expect } from '@playwright/test';
-import { readFileSync } from 'node:fs';
 
-const ROOT = new URL('../', import.meta.url);
-const VENDOR = new URL('vendor/', import.meta.url);
-const manifest = JSON.parse(readFileSync(new URL('manifest.json', VENDOR), 'utf8'));
+export const DIST = new URL('../dist/', import.meta.url); // built by `npm test` (vite build) before the run
 const APP = 'http://localhost:8642/';
 const BLANK = '__blank'; // empty same-origin page, for seeding storage before the app loads
-const STUBBED = ['https://fonts.googleapis.com/', 'https://fonts.gstatic.com/'];
 
-// Every request is answered locally: the app from the repo, CDN URLs from tests/vendor/.
-// Anything else is aborted and fails the test, so a library bump without `npm run vendor` is caught.
+// The built app is served from dist/; it should be fully self-contained, so any other
+// request (a CDN, a font) is aborted and fails the test.
 export const test = base.extend({
   context: async ({ context }, use) => {
-    const unvendored = [];
+    const external = [];
     await context.route('**/*', (route) => {
       const url = route.request().url();
-      if (url.startsWith(APP)) {
-        const path = decodeURIComponent(new URL(url).pathname.slice(1)) || 'index.html';
-        if (path === BLANK) return route.fulfill({ contentType: 'text/html', body: '' });
-        return route.fulfill({ path: new URL(path, ROOT).pathname });
+      if (url.startsWith(DIST.href)) return route.continue(); // build.spec.js opening dist/ from file://
+      if (!url.startsWith(APP)) {
+        external.push(url);
+        return route.abort();
       }
-      if (manifest[url]) {
-        return route.fulfill({
-          path: new URL(manifest[url], VENDOR).pathname,
-          headers: { 'access-control-allow-origin': '*' }, // module scripts are fetched with CORS
-        });
-      }
-      if (STUBBED.some((p) => url.startsWith(p))) return route.fulfill({ contentType: 'text/css', body: '' });
-      unvendored.push(url);
-      return route.abort();
+      const path = decodeURIComponent(new URL(url).pathname.slice(1)) || 'index.html';
+      if (path === BLANK) return route.fulfill({ contentType: 'text/html', body: '' });
+      return route.fulfill({ path: new URL(path, DIST).pathname });
     });
     await use(context);
-    expect(unvendored, 'requests with no vendored copy; run `npm run vendor`').toEqual([]);
+    expect(external, 'the built app made requests outside itself').toEqual([]);
   },
 });
 export { expect };

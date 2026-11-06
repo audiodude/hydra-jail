@@ -2,7 +2,7 @@
 
 A single-page workspace for [Hydra](https://hydra.ojack.xyz) sketches: a fixed 1920×1080 canvas with a CodeMirror editor (blackboard theme, Ubuntu Mono) below.
 
-Open `index.html` in a browser (or serve the directory, e.g. `python3 -m http.server`).
+The app builds to a single self-contained file, `dist/index.html` (about 1.5 MB, every library and font inlined, no network requests). Download it from a [release](https://github.com/audiodude/hydra-jail/releases) and open it directly, or serve it. To build it yourself, see [Development](#development).
 
 - **Ctrl+Shift+Enter** (Cmd+Shift+Enter on macOS) or **Run**: evaluate the editor contents.
 - **1:1 / fit**: show the canvas at real pixel size or scaled to the window. It always renders at 1920×1080 either way.
@@ -47,12 +47,26 @@ Sketches are shared between open tabs: a save in one shows up in the others, and
 
 ## Development
 
-The app is still just `index.html`; `package.json` only holds the test tooling.
+Source is `index.html` (markup) plus `src/`; libraries come from npm and [Vite](https://vite.dev) bundles everything into `dist/index.html` with `vite-plugin-singlefile`.
+
+| File | Contents |
+| --- | --- |
+| `src/main.js` | entry point: button wiring, startup and auto-run |
+| `src/hydra.js` | Hydra, the frame loop, p5 instance tracking, runtime error capture |
+| `src/workspace.js` | the editor, the open sketch, running code, buffer autosave |
+| `src/explorer.js` | the sketch explorer and its shortcuts |
+| `src/storage.js` | the `localStorage` layout and safe read/write helpers |
+| `src/render.js` | ⏺ Rec and ⏵ Render |
+| `src/status.js`, `src/style.css` | status bar, styles and bundled fonts |
 
 ```sh
 npm install
-npm test                # Playwright, against the installed Google Chrome
-npx playwright test -g render   # a subset
+npm run dev               # dev server with live reload
+npm run build             # dist/index.html
+npm test                  # build, then Playwright against the installed Google Chrome
+npm test -- -g render     # a subset
 ```
 
-Tests use installed Chrome (`channel: 'chrome'`) because Playwright's bundled Chromium usually can't encode H.264. They run offline: every request is answered from the repo or from the CDN copies in `tests/vendor/`, and any request without a copy fails the test. After changing a library version in `index.html`, run `npm run vendor` to refresh the copies.
+Tests run against the built `dist/index.html`, including opened from `file://`. They use installed Chrome (`channel: 'chrome'`) because Playwright's bundled Chromium usually can't encode H.264. Any request the app makes outside itself fails the test, which keeps the build self-contained.
+
+Deploy or release `dist/` only, never the repo root.
