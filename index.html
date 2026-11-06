@@ -519,23 +519,33 @@
       });
       encoder.configure(pick.config);
 
-      for (let i = 0; i < total && !job.cancelled; i++) {
-        if (encodeError) throw encodeError;
-        pauseLooping();
-        for (const p of paused) if (p5Instances.has(p) && p._setupDone) p.redraw();
-        guardUpdate();
-        hydra.tick(1000 / FPS);
-        // Capture in the same task as the draw: Hydra's WebGL canvas doesn't preserve its buffer.
-        const frame = new VideoFrame(canvas, { timestamp: Math.round(i * frameUs), duration: Math.round(frameUs) });
-        encoder.encode(frame, { keyFrame: i % (FPS * 2) === 0 });
-        frame.close();
-        while (encoder.encodeQueueSize > 4) {
-          await new Promise((r) => encoder.addEventListener('dequeue', r, { once: true }));
+      // With `fps` set, Hydra only draws on some ticks, and its canvas isn't preserved between draws.
+      // Keep the last drawn frame and re-encode it on skipped ticks, so a low-fps sketch renders as it looks live.
+      let lastDrawn = null;
+      try {
+        for (let i = 0; i < total && !job.cancelled; i++) {
+          if (encodeError) throw encodeError;
+          pauseLooping();
+          for (const p of paused) if (p5Instances.has(p) && p._setupDone) p.redraw();
+          guardUpdate();
+          // Force a draw on the first frame, otherwise the video opens on blank frames until the fps interval elapses.
+          if (i === 0 && window.fps) hydra.timeSinceLastUpdate = Math.max(hydra.timeSinceLastUpdate, 1000 / window.fps);
+          hydra.tick(1000 / FPS);
+          // Capture in the same task as the draw: Hydra's WebGL canvas doesn't preserve its buffer.
+          if (hydra.timeSinceLastUpdate === 0 || !lastDrawn) { lastDrawn?.close(); lastDrawn = new VideoFrame(canvas, { timestamp: 0 }); }
+          const frame = new VideoFrame(lastDrawn, { timestamp: Math.round(i * frameUs), duration: Math.round(frameUs) });
+          encoder.encode(frame, { keyFrame: i % (FPS * 2) === 0 });
+          frame.close();
+          while (encoder.encodeQueueSize > 4) {
+            await new Promise((r) => encoder.addEventListener('dequeue', r, { once: true }));
+          }
+          if (i % 6 === 0) {
+            btn.textContent = `⏹ ${Math.floor((i / total) * 100)}%`;
+            await yieldTask();
+          }
         }
-        if (i % 6 === 0) {
-          btn.textContent = `⏹ ${Math.floor((i / total) * 100)}%`;
-          await yieldTask();
-        }
+      } finally {
+        lastDrawn?.close();
       }
       if (!job.cancelled) await encoder.flush();
       if (encodeError) throw encodeError;
