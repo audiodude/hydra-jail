@@ -29,7 +29,10 @@ for p in .env .dev.vars .git/config .secrets package.json deploy.sh vite.config.
   code=$(curl -sS -o "$stage/leak" --max-time 10 -w '%{http_code}' "https://$DOMAIN/$p") || true
   head=$(head -c 60 "$stage/leak" 2>/dev/null | tr -d '\n') || true
   rm -f "$stage/leak"
-  if [[ "$code" == "200" ]] && ! grep -qi '<!doctype html' <<<"$head"; then
+  if [[ -z "$code" || "$code" == "000" ]]; then
+    echo "  UNCHECKED /$p (no response)" >&2
+    leaks=1
+  elif [[ "$code" == "200" ]] && ! grep -qi '<!doctype html' <<<"$head"; then
     echo "  LEAK /$p ($code): $head" >&2
     leaks=1
   else
