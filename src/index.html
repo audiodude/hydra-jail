@@ -12,6 +12,10 @@
   <button id="scale" title="Toggle between fit-to-window and 1:1 pixels">1:1</button>
   <button id="record" title="Record the canvas to a .webm file">⏺ Rec</button>
   <input id="render-secs" type="number" value="10" min="1" max="300" step="1" title="Render length in seconds (max 300)">
+  <select id="render-depth" title="Render format. 8-bit H.264 plays everywhere; 10-bit VP9 keeps smooth gradients from banding but won't play in QuickTime, Safari or iOS">
+    <option value="8">8-bit H.264</option>
+    <option value="10">10-bit VP9</option>
+  </select>
   <button id="render" title="Frame-exact 60fps render to .mp4 (may run slower than real time)">⏵ Render</button>
   <button id="run">Run</button>
 </div>

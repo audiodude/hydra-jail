@@ -2,6 +2,7 @@
 import { Output, Mp4OutputFormat, BufferTarget, VideoSampleSource, VideoSample, Quality } from 'mediabunny';
 import { $, setStatus } from './status.js';
 import { WIDTH, HEIGHT, canvas, hydra, p5Instances, guardUpdate, pauseLive, resumeLive } from './hydra.js';
+import { createYuvConverter } from './yuv.js';
 import { state } from './workspace.js';
 
 function download(blob, ext) {
@@ -74,15 +75,18 @@ export async function renderVideo() {
   const pauseLooping = () => { for (const p of p5Instances) if (p.isLooping()) { p.noLoop(); paused.add(p); } };
   pauseLooping();
   const frameUs = 1e6 / FPS;
-  let failed = null, output = null;
+  const bits = $('render-depth').value === '10' ? 10 : 8;
+  let failed = null, output = null, yuv = null;
   try {
     // Explicit codec strings: Mediabunny derives the AVC level from size and bitrate only, giving 4.0, too low for 1080p60.
+    const candidates = bits === 10 ? [['vp9', 'vp09.02.41.10']] : [['avc', 'avc1.64002A'], ['vp9', 'vp09.00.41.08']];
     let pick = null;
-    for (const [codec, fullCodecString] of [['avc', 'avc1.64002A'], ['vp9', 'vp09.00.41.08']]) {
+    for (const [codec, fullCodecString] of candidates) {
       const config = { codec: fullCodecString, width: WIDTH, height: HEIGHT, bitrate: 20e6, framerate: FPS };
       if ((await VideoEncoder.isConfigSupported(config)).supported) { pick = { codec, fullCodecString }; break; }
     }
-    if (!pick) throw new Error('no supported H.264/VP9 encoder for 1920×1080');
+    if (!pick) throw new Error(bits === 10 ? 'no 10-bit VP9 encoder for 1920×1080' : 'no supported H.264/VP9 encoder for 1920×1080');
+    yuv = createYuvConverter(WIDTH, HEIGHT, bits);
 
     output = new Output({ format: new Mp4OutputFormat({ fastStart: 'in-memory' }), target: new BufferTarget() });
     const source = new VideoSampleSource({ ...pick, quality: new Quality({ bitrate: 20e6 }), keyFrameInterval: 2 });
@@ -100,8 +104,8 @@ export async function renderVideo() {
         // Force a draw on the first frame, otherwise the video opens on blank frames until the fps interval elapses.
         if (i === 0 && window.fps) hydra.timeSinceLastUpdate = Math.max(hydra.timeSinceLastUpdate, 1000 / window.fps);
         hydra.tick(1000 / FPS);
-        // Capture in the same task as the draw: Hydra's WebGL canvas doesn't preserve its buffer.
-        if (hydra.timeSinceLastUpdate === 0 || !lastDrawn) { lastDrawn?.close(); lastDrawn = new VideoFrame(canvas, { timestamp: 0 }); }
+        // Convert in the same task as the draw: Hydra's WebGL canvas doesn't preserve its buffer.
+        if (hydra.timeSinceLastUpdate === 0 || !lastDrawn) { lastDrawn?.close(); lastDrawn = yuv.frame(canvas); }
         // The sample wraps (and closes) its own frame; add() awaits encoder backpressure and clones what it keeps.
         const sample = new VideoSample(new VideoFrame(lastDrawn, { timestamp: Math.round(i * frameUs), duration: Math.round(frameUs) }));
         try { await source.add(sample); } finally { sample.close(); }
@@ -118,6 +122,7 @@ export async function renderVideo() {
     failed = e;
   } finally {
     if (output && output.state !== 'finalized' && output.state !== 'canceled') await output.cancel();
+    yuv?.destroy();
     for (const p of paused) if (p5Instances.has(p)) p.loop(); // not ones removed mid-render
     rendering = null;
     resumeLive();

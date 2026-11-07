@@ -15,7 +15,8 @@ canvas { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; }
 button { background: #222; color: #ccc; border: 1px solid #444; font: inherit; padding: 2px 8px; cursor: pointer; }
 button:disabled { opacity: .4; cursor: default; }
 #record.on, #render.on { color: #fff; background: #a00; border-color: #f44; }
-#render-secs { width: 4em; background: #222; color: #ccc; border: 1px solid #444; font: inherit; padding: 2px 4px; }
+#render-secs, #render-depth { background: #222; color: #ccc; border: 1px solid #444; font: inherit; padding: 2px 4px; }
+#render-secs { width: 4em; }
 
 #workbench { display: flex; height: 40vh; max-width: 1920px; margin: 0 auto; font-family: system-ui, sans-serif; }
 #activity { width: 48px; flex: none; background: #333; display: flex; flex-direction: column; align-items: center; }

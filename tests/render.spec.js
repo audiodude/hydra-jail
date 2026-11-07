@@ -24,6 +24,16 @@ async function render(page, secs) {
   return download;
 }
 
+// The mp4's colour boxes: `colr` (nclx) for every track, `vpcC` for VP9.
+function colourInfo(bytes) {
+  const c = bytes.indexOf('colrnclx'), v = bytes.indexOf('vpcC');
+  return {
+    matrix: bytes.readUInt16BE(c + 12),
+    fullRange: bytes[c + 14] >> 7,
+    vp9: v < 0 ? null : { profile: bytes[v + 8], bitDepth: bytes[v + 10] >> 4 },
+  };
+}
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(instrumentEncoder);
   await openApp(page);
@@ -35,9 +45,32 @@ test('renders an H.264 mp4 with one frame per 1/60 s', async ({ page }) => {
   const bytes = await readFile(await download.path());
   expect(bytes.includes('ftyp')).toBe(true);
   expect(bytes.includes('avc1')).toBe(true);
+  // Limited range: players that ignore the full-range flag (VLC) would stretch full range, crushing darks.
+  expect(colourInfo(bytes)).toEqual({ matrix: 1, fullRange: 0, vp9: null });
   expect(await page.evaluate(() => window.__px.length)).toBe(30);
   await expect(page.locator('#render')).toHaveText('⏵ Render');
   await expect(page.locator('#record')).toBeEnabled();
+});
+
+test('10-bit renders VP9 profile 2, and the choice survives a reload', async ({ page }) => {
+  await page.selectOption('#render-depth', '10');
+  const download = await render(page, 0.5);
+  expect(download.suggestedFilename()).toMatch(/\.mp4$/);
+  expect(colourInfo(await readFile(await download.path()))).toEqual({ matrix: 1, fullRange: 0, vp9: { profile: 2, bitDepth: 10 } });
+  expect(await page.evaluate(() => window.__px.length)).toBe(30);
+  await page.reload();
+  await expect(page.locator('#render-depth')).toHaveValue('10');
+});
+
+test('translucent output renders as it looks live', async ({ page }) => {
+  // Hydra leaves (77, 0, 0, 128) in its premultiplied canvas, which the page shows as red 77.
+  // Un-premultiplying it would brighten the render to red 154.
+  await setCode(page, 'solid(0.3, 0, 0, 0.5).out()');
+  await page.click('#run');
+  await render(page, 0.1);
+  const px = await page.evaluate(() => window.__px[0]); // r+g+b+a of the centre pixel
+  expect(px).toBeGreaterThan(77 + 255 - 15);
+  expect(px).toBeLessThan(77 + 255 + 15);
 });
 
 test('a second click cancels instead of starting another render', async ({ page }) => {

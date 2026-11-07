@@ -1,7 +1,7 @@
 // Entry point. Everything is module-scoped: Hydra's makeGlobal overwrites window globals like `render`.
 import './hydra.js'; // first: sets up Hydra's globals and the tracked window.p5 before any sketch runs
 import { $, setStatus } from './status.js';
-import { KEY } from './storage.js';
+import { KEY, store } from './storage.js';
 import { editor, run, lastRunHung, startupError } from './workspace.js';
 import { render, newSketch, toggleExplorer } from './explorer.js';
 import { toggleRecording, renderVideo } from './render.js';
@@ -16,6 +16,9 @@ $('scale').onclick = (e) => {
   const actual = $('stage').classList.toggle('actual');
   e.target.textContent = actual ? 'fit' : '1:1';
 };
+const depth = $('render-depth');
+depth.value = localStorage.getItem(KEY.renderDepth) === '10' ? '10' : '8';
+depth.onchange = () => store(KEY.renderDepth, depth.value);
 
 if (localStorage.getItem(KEY.explorer) !== 'closed') toggleExplorer();
 else editor.refresh();
