@@ -17,7 +17,8 @@
     </button>
   </nav>
   <aside id="explorer" class="closed">
-    <header><span>SKETCHES</span><button id="new-sketch" title="New sketch">+</button></header>
+    <header><span>SKETCHES</span><button id="import-sketches" title="Import sketches from a file">⇪</button><button id="export-sketches" title="Export all sketches to a file">⇩</button><button id="new-sketch" title="New sketch">+</button></header>
+    <input id="import-file" type="file" accept=".json,application/json" hidden>
     <ul id="sketch-list"></ul>
   </aside>
   <div id="main">
@@ -38,6 +39,15 @@
     <div id="editor"></div>
   </div>
 </div>
+<dialog id="import-dialog">
+  <p id="import-summary"></p>
+  <p class="hint"><b>Merge</b> keeps all your sketches and adds the file's. A name you already use with different code comes in as “name (imported)”.<br><b>Overwrite</b> replaces all your sketches with the file's.</p>
+  <form method="dialog">
+    <button value="cancel">Cancel</button>
+    <button value="overwrite" id="import-overwrite">Overwrite</button>
+    <button value="merge" autofocus>Merge</button>
+  </form>
+</dialog>
 <script type="module" src="./main.js"></script>
 </body>
 </html>

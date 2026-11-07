@@ -44,8 +44,12 @@ A VSCode-style explorer sits left of the editor; sketches are stored in `localSt
 | Rename | double-click, or hover → ✎ |
 | Delete | hover → × |
 | Revert to saved | hover the modified sketch → ↺ |
+| Export all | **⇩** in the explorer header: downloads `hydra-jail-sketches-<date>.json` |
+| Import | **⇪** in the explorer header, then **Merge** or **Overwrite** |
 
 A ● marks unsaved changes (for untitled, anything other than the starter code); switching sketches with unsaved changes asks first.
+
+An import file is a JSON object of `{ "name": "code" }`, the same format the explorer stores. **Merge** keeps all your sketches: new names are added, identical copies are skipped, and a name you already use for different code comes in as `name (imported)` (then `(imported 2)`, ...). **Overwrite** replaces all your sketches with the file's; if that removes the open sketch, its code stays in the editor as untitled.
 
 Sketches are shared between open tabs: a save in one shows up in the others, and a sketch deleted elsewhere becomes untitled in tabs that had it open. If the stored sketches can't be parsed, they're moved aside to a `hydra-jail:sketches:corrupt-<timestamp>` key rather than overwritten.
 
@@ -59,6 +63,7 @@ All source lives in `src/`, including `src/index.html` (the markup and Vite's en
 | `src/hydra.js` | Hydra, the frame loop, p5 instance tracking, runtime error capture |
 | `src/workspace.js` | the editor, the open sketch, running code, buffer autosave |
 | `src/explorer.js` | the sketch explorer and its shortcuts |
+| `src/transfer.js` | sketch import and export |
 | `src/storage.js` | the `localStorage` layout and safe read/write helpers |
 | `src/render.js` | ⏵ Render |
 | `src/yuv.js` | GPU conversion of rendered frames to video colour |

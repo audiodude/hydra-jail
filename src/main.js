@@ -5,12 +5,20 @@ import { KEY, store } from './storage.js';
 import { editor, run, lastRunHung, startupError } from './workspace.js';
 import { render, newSketch, toggleExplorer } from './explorer.js';
 import { renderVideo, updateSizeOptions } from './render.js';
+import { exportSketches, importSketches } from './transfer.js';
 import './style.css'; // after the modules, so it overrides CodeMirror's own CSS (same selectors)
 
 $('render').onclick = renderVideo;
 $('run').onclick = run;
 $('new-sketch').onclick = newSketch;
 $('toggle-explorer').onclick = toggleExplorer;
+$('export-sketches').onclick = exportSketches;
+$('import-sketches').onclick = () => $('import-file').click();
+$('import-file').onchange = (e) => {
+  const file = e.target.files[0];
+  e.target.value = ''; // so picking the same file again still fires
+  if (file) importSketches(file);
+};
 $('scale').onclick = (e) => {
   const actual = $('stage').classList.toggle('actual');
   e.target.textContent = actual ? 'fit' : '1:1';

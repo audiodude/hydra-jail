@@ -11,17 +11,22 @@ export const KEY = {
   running: 'hydra-jail:running',     // sessionStorage: set while a run might still hang the page
 };
 
-// Map, not a plain object, so names like "__proto__" are safe. Returns null if the stored data is unreadable.
-export function readSketches() {
-  const raw = localStorage.getItem(KEY.sketches);
-  if (raw === null) return new Map();
+// { name: code } JSON → Map, or null if it isn't that shape. Map, not a plain object, so names like
+// "__proto__" are safe. Shared by localStorage and exported files, which use the same format.
+export function parseSketches(text) {
   try {
-    const obj = JSON.parse(raw);
+    const obj = JSON.parse(text);
     if (obj && typeof obj === 'object' && !Array.isArray(obj) && Object.values(obj).every((v) => typeof v === 'string')) {
       return new Map(Object.entries(obj));
     }
   } catch {}
   return null;
+}
+
+// Returns null if the stored data is unreadable.
+export function readSketches() {
+  const raw = localStorage.getItem(KEY.sketches);
+  return raw === null ? new Map() : parseSketches(raw);
 }
 
 // Startup read. Unreadable data is moved aside instead of being left for the next save to overwrite.
