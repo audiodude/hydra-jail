@@ -6,20 +6,8 @@
 </head>
 <body>
 <div id="stage"><canvas id="hydra"></canvas></div>
-<div id="bar">
+<div id="statusbar">
   <span id="tab"></span>
-  <button id="run">Run</button>
-  <button id="scale" title="Toggle between fit-to-window and 1:1 pixels">1:1</button>
-  <label id="render-len" title="Render length in seconds"><input id="render-secs" type="number" value="10" min="1" step="1"> s</label>
-  <select id="render-size" title="Render size. 4K takes about 4× as long; uploading 4K also gets better quality from YouTube">
-    <option value="1080">1080p</option>
-    <option value="2160">4K</option>
-  </select>
-  <select id="render-depth" title="Render format. 8-bit H.264 plays everywhere; 10-bit VP9 keeps smooth gradients from banding but won't play in QuickTime, Safari or iOS">
-    <option value="8">8-bit H.264</option>
-    <option value="10">10-bit VP9</option>
-  </select>
-  <button id="render" title="Frame-exact 60fps render to .mp4 (may run slower than real time)">⏵ Render</button>
   <span id="status">Ctrl+Shift+Enter to run</span>
 </div>
 <div id="workbench">
@@ -32,7 +20,23 @@
     <header><span>SKETCHES</span><button id="new-sketch" title="New sketch">+</button></header>
     <ul id="sketch-list"></ul>
   </aside>
-  <div id="editor"></div>
+  <div id="main">
+    <div id="bar">
+      <button id="run">Run</button>
+      <button id="scale" title="Toggle between fit-to-window and 1:1 pixels">1:1</button>
+      <label id="render-len" title="Render length in seconds"><input id="render-secs" type="number" value="10" min="1" step="1"> s</label>
+      <select id="render-size" title="Render size. 4K takes about 4× as long; uploading 4K also gets better quality from YouTube">
+        <option value="1080">1080p</option>
+        <option value="2160">4K</option>
+      </select>
+      <select id="render-depth" title="Render format. 8-bit H.264 plays everywhere; 10-bit VP9 keeps smooth gradients from banding but won't play in QuickTime, Safari or iOS">
+        <option value="8">8-bit H.264</option>
+        <option value="10">10-bit VP9</option>
+      </select>
+      <button id="render" title="Frame-exact 60fps render to .mp4 (may run slower than real time)">⏵ Render</button>
+    </div>
+    <div id="editor"></div>
+  </div>
 </div>
 <script type="module" src="./main.js"></script>
 </body>
