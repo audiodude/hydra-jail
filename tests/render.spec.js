@@ -64,6 +64,25 @@ test('4K renders at 3840×2160, then the live canvas goes back to 1080p', async 
   expect(await page.evaluate(() => [document.getElementById('hydra').width, document.getElementById('hydra').height])).toEqual([1920, 1080]);
 });
 
+test('4K is greyed out where it can\'t render, and comes back when it can', async ({ page }) => {
+  // An encoder with no 10-bit 4K, and a saved 10-bit 4K choice.
+  await page.addInitScript(() => {
+    const real = VideoEncoder.isConfigSupported.bind(VideoEncoder);
+    VideoEncoder.isConfigSupported = (c) => (c.width === 3840 && c.codec.startsWith('vp09.02') ? Promise.resolve({ supported: false }) : real(c));
+  });
+  await page.evaluate(() => { localStorage.setItem('hydra-jail:render-size', '2160'); localStorage.setItem('hydra-jail:render-depth', '10'); });
+  await page.reload();
+  const fourK = page.locator('#render-size option[value="2160"]');
+  await expect(fourK).toBeDisabled();
+  await expect(page.locator('#render-size')).toHaveValue('1080');
+  await page.selectOption('#render-depth', '8');
+  await expect(fourK).toBeEnabled();
+  await expect(page.locator('#render-size'), 'the saved 4K choice returns').toHaveValue('2160');
+  await page.selectOption('#render-depth', '10');
+  await expect(fourK).toBeDisabled();
+  await expect(page.locator('#render-size')).toHaveValue('1080');
+});
+
 test('translucent output renders as it looks live', async ({ page }) => {
   // Hydra leaves (77, 0, 0, 128) in its premultiplied canvas, which the page shows as red 77.
   // Un-premultiplying it would brighten the render to red 154.

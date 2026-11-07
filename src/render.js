@@ -11,6 +11,38 @@ const SIZES = {
   1080: { width: WIDTH, height: HEIGHT, bitrate: 20e6, codecs: { 8: [['avc', 'avc1.64002A'], ['vp9', 'vp09.00.41.08']], 10: [['vp9', 'vp09.02.41.10']] } },
   2160: { width: 3840, height: 2160, bitrate: 80e6, codecs: { 8: [['avc', 'avc1.640034'], ['vp9', 'vp09.00.51.08']], 10: [['vp9', 'vp09.02.51.10']] } },
 };
+const FPS = 60;
+
+// First codec this browser can encode at `size` and `bits`, or null.
+async function pickCodec(size, bits) {
+  for (const [codec, fullCodecString] of size.codecs[bits]) {
+    const config = { codec: fullCodecString, width: size.width, height: size.height, bitrate: size.bitrate, framerate: FPS };
+    if ((await VideoEncoder.isConfigSupported(config)).supported) return { codec, fullCodecString };
+  }
+  return null;
+}
+
+// Hydra and the YUV converter need WebGL textures at least as wide as the frame.
+let maxTexture;
+const glFits = (size) => {
+  maxTexture ??= document.createElement('canvas').getContext('webgl2')?.getParameter(WebGL2RenderingContext.MAX_TEXTURE_SIZE) ?? 0;
+  return maxTexture >= size.width;
+};
+
+// Greys out 4K when this browser can't render it at the chosen depth, falling back to 1080p meanwhile.
+// The saved choice is kept, so 4K comes back once it works again (e.g. after switching depth).
+let check = 0;
+export async function updateSizeOptions(savedSize) {
+  const id = ++check;
+  const bits = $('render-depth').value === '10' ? 10 : 8;
+  const ok = 'VideoEncoder' in window && glFits(SIZES[2160]) && !!(await pickCodec(SIZES[2160], bits));
+  if (id !== check) return; // superseded by a later change
+  const menu = $('render-size'), option = menu.querySelector('option[value="2160"]');
+  option.disabled = !ok;
+  option.title = ok ? '' : `this browser can't render ${bits}-bit video at 4K`;
+  if (!ok) menu.value = '1080';
+  else if (savedSize === '2160') menu.value = '2160';
+}
 
 // Yield to the event loop without timer throttling (setTimeout is clamped to 1s in background tabs).
 const yieldTask = () => new Promise((r) => { const c = new MessageChannel(); c.port1.onmessage = r; c.port2.postMessage(0); });
@@ -22,7 +54,6 @@ let rendering = null; // active offline render job, if any
 // Code can still be run mid-render on purpose: it takes effect from the next frame.
 export async function renderVideo() {
   if (rendering) { rendering.cancelled = true; return; }
-  const FPS = 60;
   const secs = Number($('render-secs').value);
   if (!(secs > 0)) return setStatus('render length must be a positive number of seconds', true);
   if (!('VideoEncoder' in window)) return setStatus('WebCodecs not supported in this browser', true);
@@ -62,11 +93,7 @@ export async function renderVideo() {
     const pauseLooping = () => { for (const p of p5Instances) if (p.isLooping()) { p.noLoop(); paused.add(p); } };
     pauseLooping();
 
-    let pick = null;
-    for (const [codec, fullCodecString] of size.codecs[bits]) {
-      const config = { codec: fullCodecString, width: size.width, height: size.height, bitrate: size.bitrate, framerate: FPS };
-      if ((await VideoEncoder.isConfigSupported(config)).supported) { pick = { codec, fullCodecString }; break; }
-    }
+    const pick = await pickCodec(size, bits);
     if (!pick) throw new Error(`no ${bits === 10 ? '10-bit VP9' : 'H.264/VP9'} encoder for ${size.width}×${size.height}`);
     // Hydra draws at the render size; resizing reallocates its buffers, so feedback restarts from black.
     if (size.width !== WIDTH) hydra.setResolution(size.width, size.height);

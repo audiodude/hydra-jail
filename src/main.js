@@ -4,7 +4,7 @@ import { $, setStatus } from './status.js';
 import { KEY, store } from './storage.js';
 import { editor, run, lastRunHung, startupError } from './workspace.js';
 import { render, newSketch, toggleExplorer } from './explorer.js';
-import { renderVideo } from './render.js';
+import { renderVideo, updateSizeOptions } from './render.js';
 import './style.css'; // after the modules, so it overrides CodeMirror's own CSS (same selectors)
 
 $('render').onclick = renderVideo;
@@ -21,6 +21,10 @@ for (const [id, key] of [['render-depth', KEY.renderDepth], ['render-size', KEY.
   if ([...menu.options].some((o) => o.value === saved)) menu.value = saved;
   menu.onchange = () => store(key, menu.value);
 }
+// 4K depends on the depth (10-bit 4K may be unsupported where 8-bit isn't).
+const checkSizes = () => updateSizeOptions(localStorage.getItem(KEY.renderSize));
+$('render-depth').addEventListener('change', checkSizes);
+checkSizes();
 
 if (localStorage.getItem(KEY.explorer) !== 'closed') toggleExplorer();
 else editor.refresh();
