@@ -79,4 +79,6 @@ npm test -- -g render     # a subset
 
 Tests run against the built `dist/index.html`, including opened from `file://`. They use installed Chrome (`channel: 'chrome'`) because Playwright's bundled Chromium usually can't encode H.264. Any request the app makes outside itself fails the test, which keeps the build self-contained.
 
-Deploy or release `dist/` only, never the repo root.
+## Deploy
+
+`./deploy.sh` builds and publishes to https://hydra-jail.audiodude.xyz (Cloudflare Pages project `hydra-jail`). It uploads only `dist/index.html`, never the repo root, then checks that no source or secret files are served. It needs `CF_API_TOKEN` (read from `~/.secrets`) or `CLOUDFLARE_API_TOKEN`.
