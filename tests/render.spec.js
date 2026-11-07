@@ -1,5 +1,4 @@
-import { readFile } from 'node:fs/promises';
-import { test, expect, openApp, setCode } from './fixtures.js';
+import { test, expect, openApp, setCode, renderFile } from './fixtures.js';
 
 // Counts encoder use and samples the centre pixel of every encoded frame (r+g+b+a).
 function instrumentEncoder() {
@@ -17,13 +16,6 @@ function instrumentEncoder() {
   };
 }
 
-async function render(page, secs) {
-  await page.fill('#render-secs', String(secs));
-  const download = page.waitForEvent('download');
-  await page.click('#render');
-  return download;
-}
-
 // The mp4's colour boxes: `colr` (nclx) for every track, `vpcC` for VP9.
 function colourInfo(bytes) {
   const c = bytes.indexOf('colrnclx'), v = bytes.indexOf('vpcC');
@@ -39,27 +31,37 @@ test.beforeEach(async ({ page }) => {
   await openApp(page);
 });
 
-test('renders an H.264 mp4 with one frame per 1/60 s', async ({ page }) => {
-  const download = await render(page, 0.5);
-  expect(download.suggestedFilename()).toMatch(/^untitled-[\d-]+\.mp4$/);
-  const bytes = await readFile(await download.path());
-  expect(bytes.includes('ftyp')).toBe(true);
-  expect(bytes.includes('avc1')).toBe(true);
+// Width and height from the track's sample entry (avc1/vp09), after `stsd`: ftyp also names avc1 as a brand.
+function videoSize(bytes) {
+  const e = bytes.indexOf('stsd') + 16; // stsd header (12) + entry size (4) → entry type
+  return { codec: bytes.toString('latin1', e, e + 4), width: bytes.readUInt16BE(e + 28), height: bytes.readUInt16BE(e + 30) };
+}
+
+test('renders an H.264 mp4 with one frame per 1/60 s, saved to the picked file', async ({ page }) => {
+  const file = await renderFile(page, 0.5);
+  expect(file.name).toMatch(/^untitled-[\d-]+\.mp4$/);
+  await expect(page.locator('#status')).toHaveText(`saved ${file.name}`);
+  expect(file.bytes.includes('ftyp')).toBe(true);
+  expect(videoSize(file.bytes)).toEqual({ codec: 'avc1', width: 1920, height: 1080 });
   // Limited range: players that ignore the full-range flag (VLC) would stretch full range, crushing darks.
-  expect(colourInfo(bytes)).toEqual({ matrix: 1, fullRange: 0, vp9: null });
+  expect(colourInfo(file.bytes)).toEqual({ matrix: 1, fullRange: 0, vp9: null });
   expect(await page.evaluate(() => window.__px.length)).toBe(30);
-  await expect(page.locator('#render')).toHaveText('⏵ Render');
-  await expect(page.locator('#record')).toBeEnabled();
 });
 
 test('10-bit renders VP9 profile 2, and the choice survives a reload', async ({ page }) => {
   await page.selectOption('#render-depth', '10');
-  const download = await render(page, 0.5);
-  expect(download.suggestedFilename()).toMatch(/\.mp4$/);
-  expect(colourInfo(await readFile(await download.path()))).toEqual({ matrix: 1, fullRange: 0, vp9: { profile: 2, bitDepth: 10 } });
+  const file = await renderFile(page, 0.5);
+  expect(colourInfo(file.bytes)).toEqual({ matrix: 1, fullRange: 0, vp9: { profile: 2, bitDepth: 10 } });
   expect(await page.evaluate(() => window.__px.length)).toBe(30);
   await page.reload();
   await expect(page.locator('#render-depth')).toHaveValue('10');
+});
+
+test('4K renders at 3840×2160, then the live canvas goes back to 1080p', async ({ page }) => {
+  await page.selectOption('#render-size', '2160');
+  const file = await renderFile(page, 0.1);
+  expect(videoSize(file.bytes)).toEqual({ codec: 'avc1', width: 3840, height: 2160 });
+  expect(await page.evaluate(() => [document.getElementById('hydra').width, document.getElementById('hydra').height])).toEqual([1920, 1080]);
 });
 
 test('translucent output renders as it looks live', async ({ page }) => {
@@ -67,23 +69,32 @@ test('translucent output renders as it looks live', async ({ page }) => {
   // Un-premultiplying it would brighten the render to red 154.
   await setCode(page, 'solid(0.3, 0, 0, 0.5).out()');
   await page.click('#run');
-  await render(page, 0.1);
+  await renderFile(page, 0.1);
   const px = await page.evaluate(() => window.__px[0]); // r+g+b+a of the centre pixel
   expect(px).toBeGreaterThan(77 + 255 - 15);
   expect(px).toBeLessThan(77 + 255 + 15);
 });
 
-test('a second click cancels instead of starting another render', async ({ page }) => {
+test('a second click cancels, and the partial file is discarded', async ({ page }) => {
   await page.fill('#render-secs', '1');
   await page.evaluate(() => { const b = document.getElementById('render'); b.click(); b.click(); });
   await expect(page.locator('#status')).toHaveText('render cancelled');
   // The cancelled job may configure its encoder before it checks for cancellation, but encodes nothing.
   expect(await page.evaluate(() => window.__configures)).toBeLessThanOrEqual(1);
   expect(await page.evaluate(() => window.__px.length)).toBe(0);
+  // Nothing committed, and the new empty file the picker created is deleted.
+  expect(await page.evaluate(() => [window.__saved, window.__aborted, window.__removed])).toEqual([null, 1, 1]);
   await expect(page.locator('#render')).toHaveText('⏵ Render');
 });
 
-for (const [secs, message] of [[301, /capped at 300 s/], [0.001, /at least one frame/], [0, /positive number/]]) {
+test('closing the save dialog cancels before anything is encoded', async ({ page }) => {
+  await page.evaluate(() => { window.__dismissPicker = true; });
+  expect(await renderFile(page, 1)).toBeNull();
+  await expect(page.locator('#status')).toHaveText('render cancelled');
+  expect(await page.evaluate(() => window.__configures)).toBe(0);
+});
+
+for (const [secs, message] of [[0.001, /at least one frame/], [0, /positive number/]]) {
   test(`rejects a ${secs} s render`, async ({ page }) => {
     await page.fill('#render-secs', String(secs));
     await page.click('#render');
@@ -98,7 +109,7 @@ for (const [fps, hold] of [[undefined, 1], [30, 2], [20, 3]]) {
   test(`fps = ${fps} renders each drawn frame ${hold}x, from the first frame`, async ({ page }) => {
     await setCode(page, `fps = ${fps}; solid(() => (time * 4) % 1, 0, 0).out()`);
     await page.click('#run');
-    await render(page, 0.5);
+    await renderFile(page, 0.5);
     const px = await page.evaluate(() => window.__px);
     expect(px).toHaveLength(30);
     for (let i = 0; i < px.length; i++) {
@@ -116,7 +127,7 @@ pb = new p5(s => { s.setup = () => { s.createCanvas(10, 10).hide(); s.noLoop() }
 osc().out()`);
   await page.click('#run');
   await expect.poll(() => page.evaluate(() => cnt.a)).toBeGreaterThan(0);
-  const download = render(page, 1);
+  const done = renderFile(page, 1);
   await expect(page.locator('#render')).toHaveText(/⏹/);
   // The README's re-run pattern, done mid-render.
   await page.evaluate(() => {
@@ -125,7 +136,7 @@ osc().out()`);
     window.aAtRemove = cnt.a;
     pc = new p5(s => { s.setup = () => s.createCanvas(10, 10).hide(); s.draw = () => cnt.c++ });
   });
-  await download;
+  await done;
   const r = await page.evaluate(() => ({
     aAfterRemove: cnt.a - aAtRemove, b: cnt.b, aLooping: removedA.isLooping(), cLooping: pc.isLooping(), c: cnt.c,
   }));

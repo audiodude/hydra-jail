@@ -5,13 +5,15 @@ A single-page workspace for [Hydra](https://hydra.ojack.xyz) sketches: a fixed 1
 The app builds to a single self-contained file, `dist/index.html` (about 1.5 MB, every library and font inlined, no network requests). Download it from a [release](https://github.com/audiodude/hydra-jail/releases) and open it directly, or serve it. To build it yourself, see [Development](#development).
 
 - **Ctrl+Shift+Enter** (Cmd+Shift+Enter on macOS) or **Run**: evaluate the editor contents.
-- **1:1 / fit**: show the canvas at real pixel size or scaled to the window. It always renders at 1920×1080 either way.
+- **1:1 / fit**: show the canvas at real pixel size or scaled to the window. It always draws at 1920×1080 either way (except during a 4K render).
 - The working buffer autosaves to `localStorage` as you type, and reloads with the page.
 - If a run hangs or crashes the page, the next load skips the auto-run so you can fix the code.
 - Mic input (`a.fft`) is off (`detectAudio: false`), so there's no permission prompt.
-- **⏺ Rec** (live): record the canvas in real time to `<sketch>-<timestamp>.webm` via `MediaRecorder`. Quick, but frames can be dropped or unevenly timed if the encoder falls behind.
-- **⏵ Render N s** (frame-exact, max 300 s): pauses the live loop and steps Hydra's `time` by exactly 1/60 s per frame, redrawing any p5 instances first, then encodes every frame with WebCodecs (muxed by [Mediabunny](https://mediabunny.dev)) into a constant-60fps `.mp4`. A sketch that sets Hydra's `fps` lower renders as it looks live, each drawn frame held until the next. The whole file is built in memory, hence the 5-minute cap. May run slower than real time; click again to cancel. Only animation driven by Hydra's `time` (or p5's `frameCount`) stays in sync. `Date.now()`, `performance.now()` and `s.millis()` follow the wall clock and will drift.
-  - The format menu next to it picks **8-bit H.264** (default; VP9 if H.264 encoding isn't available), which plays everywhere, or **10-bit VP9**, which keeps smooth gradients (dark blues especially) from banding but won't play in QuickTime, Safari or iOS. The choice is remembered.
+- **⏵ Render N s** (frame-exact): asks where to save the `.mp4`, then pauses the live loop and steps Hydra's `time` by exactly 1/60 s per frame, redrawing any p5 instances first, and encodes every frame with WebCodecs (muxed by [Mediabunny](https://mediabunny.dev)) into a constant-60fps `.mp4`. A sketch that sets Hydra's `fps` lower renders as it looks live, each drawn frame held until the next. May run slower than real time; click again to cancel. Only animation driven by Hydra's `time` (or p5's `frameCount`) stays in sync. `Date.now()`, `performance.now()` and `s.millis()` follow the wall clock and will drift.
+  - The video is written to disk as it renders, so memory use doesn't grow with length and there's no length cap. This needs Chrome or Edge (the File System Access API). A cancelled or failed render leaves no file behind, and leaves an existing file you chose to overwrite untouched.
+  - The size menu picks **1080p** or **4K** (3840×2160). 4K takes about 4× as long; for YouTube it's worth it, since YouTube gives 4K uploads a higher bitrate. Hydra draws at 4K for the render, which resizes its buffers, so feedback (`src(o0)`) restarts from black when a 4K render starts and again when it ends.
+  - The format menu picks **8-bit H.264** (default; VP9 if H.264 encoding isn't available), which plays everywhere, or **10-bit VP9**, which keeps smooth gradients (dark blues especially) from banding, on YouTube too, but won't play in QuickTime, Safari or iOS.
+  - Both menus remember their choice.
   - Frames are converted to video colour on the GPU as standard limited-range BT.709, so players that ignore the full-range flag (like VLC) show the same colours as the canvas instead of crushing the darks.
 
 ## p5.js
@@ -58,7 +60,8 @@ All source lives in `src/`, including `src/index.html` (the markup and Vite's en
 | `src/workspace.js` | the editor, the open sketch, running code, buffer autosave |
 | `src/explorer.js` | the sketch explorer and its shortcuts |
 | `src/storage.js` | the `localStorage` layout and safe read/write helpers |
-| `src/render.js` | ⏺ Rec and ⏵ Render |
+| `src/render.js` | ⏵ Render |
+| `src/yuv.js` | GPU conversion of rendered frames to video colour |
 | `src/status.js`, `src/style.css` | status bar, styles and bundled fonts |
 
 ```sh

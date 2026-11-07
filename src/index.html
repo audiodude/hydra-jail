@@ -10,8 +10,11 @@
   <span id="tab"></span>
   <span id="status">Ctrl+Shift+Enter to run</span>
   <button id="scale" title="Toggle between fit-to-window and 1:1 pixels">1:1</button>
-  <button id="record" title="Record the canvas to a .webm file">⏺ Rec</button>
-  <input id="render-secs" type="number" value="10" min="1" max="300" step="1" title="Render length in seconds (max 300)">
+  <input id="render-secs" type="number" value="10" min="1" step="1" title="Render length in seconds">
+  <select id="render-size" title="Render size. 4K takes about 4× as long; uploading 4K also gets better quality from YouTube">
+    <option value="1080">1080p</option>
+    <option value="2160">4K</option>
+  </select>
   <select id="render-depth" title="Render format. 8-bit H.264 plays everywhere; 10-bit VP9 keeps smooth gradients from banding but won't play in QuickTime, Safari or iOS">
     <option value="8">8-bit H.264</option>
     <option value="10">10-bit VP9</option>

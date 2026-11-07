@@ -7,6 +7,7 @@ export const KEY = {
   current: 'hydra-jail:current',     // name of the open sketch
   explorer: 'hydra-jail:explorer',   // 'closed' when collapsed
   renderDepth: 'hydra-jail:render-depth', // '10' for 10-bit VP9 renders
+  renderSize: 'hydra-jail:render-size',   // '2160' for 4K renders
   running: 'hydra-jail:running',     // sessionStorage: set while a run might still hang the page
 };
 

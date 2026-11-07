@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { test, expect, DIST, openApp, setCode } from './fixtures.js';
+import { test, expect, DIST, openApp, setCode, renderFile } from './fixtures.js';
 
 test('the build is one self-contained file', async () => {
   const html = await readFile(new URL('index.html', DIST), 'utf8');
@@ -27,9 +27,8 @@ test('works opened from file://', async ({ page }) => {
   await setCode(page, 'solid(1, 0, 0).out()');
   await page.click('#run');
   await expect(page.locator('#status')).toHaveText(/^ran at/);
-  await page.fill('#render-secs', '0.2');
-  const download = page.waitForEvent('download');
-  await page.click('#render');
-  expect((await download).suggestedFilename()).toMatch(/\.mp4$/);
+  const file = await renderFile(page, 0.2);
+  expect(file.name).toMatch(/\.mp4$/);
+  expect(file.bytes.length).toBeGreaterThan(1000);
   expect(errors).toEqual([]);
 });

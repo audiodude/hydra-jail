@@ -4,10 +4,9 @@ import { $, setStatus } from './status.js';
 import { KEY, store } from './storage.js';
 import { editor, run, lastRunHung, startupError } from './workspace.js';
 import { render, newSketch, toggleExplorer } from './explorer.js';
-import { toggleRecording, renderVideo } from './render.js';
+import { renderVideo } from './render.js';
 import './style.css'; // after the modules, so it overrides CodeMirror's own CSS (same selectors)
 
-$('record').onclick = toggleRecording;
 $('render').onclick = renderVideo;
 $('run').onclick = run;
 $('new-sketch').onclick = newSketch;
@@ -16,9 +15,12 @@ $('scale').onclick = (e) => {
   const actual = $('stage').classList.toggle('actual');
   e.target.textContent = actual ? 'fit' : '1:1';
 };
-const depth = $('render-depth');
-depth.value = localStorage.getItem(KEY.renderDepth) === '10' ? '10' : '8';
-depth.onchange = () => store(KEY.renderDepth, depth.value);
+// Render menus remember their choice.
+for (const [id, key] of [['render-depth', KEY.renderDepth], ['render-size', KEY.renderSize]]) {
+  const menu = $(id), saved = localStorage.getItem(key);
+  if ([...menu.options].some((o) => o.value === saved)) menu.value = saved;
+  menu.onchange = () => store(key, menu.value);
+}
 
 if (localStorage.getItem(KEY.explorer) !== 'closed') toggleExplorer();
 else editor.refresh();
