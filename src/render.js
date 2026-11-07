@@ -1,5 +1,5 @@
-// Live recording (MediaRecorder) and frame-exact offline rendering (WebCodecs + mp4-muxer).
-import { Muxer, ArrayBufferTarget } from 'mp4-muxer';
+// Live recording (MediaRecorder) and frame-exact offline rendering (WebCodecs via Mediabunny).
+import { Output, Mp4OutputFormat, BufferTarget, VideoSampleSource, VideoSample, Quality } from 'mediabunny';
 import { $, setStatus } from './status.js';
 import { WIDTH, HEIGHT, canvas, hydra, p5Instances, guardUpdate, pauseLive, resumeLive } from './hydra.js';
 import { state } from './workspace.js';
@@ -74,32 +74,26 @@ export async function renderVideo() {
   const pauseLooping = () => { for (const p of p5Instances) if (p.isLooping()) { p.noLoop(); paused.add(p); } };
   pauseLooping();
   const frameUs = 1e6 / FPS;
-  let failed = null, muxer = null, encoder = null, encodeError = null;
+  let failed = null, output = null;
   try {
+    // Explicit codec strings: Mediabunny derives the AVC level from size and bitrate only, giving 4.0, too low for 1080p60.
     let pick = null;
-    for (const [muxCodec, codec] of [['avc', 'avc1.64002A'], ['vp9', 'vp09.00.41.08']]) {
-      const config = { codec, width: WIDTH, height: HEIGHT, bitrate: 20e6, framerate: FPS };
-      if ((await VideoEncoder.isConfigSupported(config)).supported) { pick = { muxCodec, config }; break; }
+    for (const [codec, fullCodecString] of [['avc', 'avc1.64002A'], ['vp9', 'vp09.00.41.08']]) {
+      const config = { codec: fullCodecString, width: WIDTH, height: HEIGHT, bitrate: 20e6, framerate: FPS };
+      if ((await VideoEncoder.isConfigSupported(config)).supported) { pick = { codec, fullCodecString }; break; }
     }
     if (!pick) throw new Error('no supported H.264/VP9 encoder for 1920×1080');
 
-    muxer = new Muxer({
-      target: new ArrayBufferTarget(),
-      video: { codec: pick.muxCodec, width: WIDTH, height: HEIGHT, frameRate: FPS },
-      fastStart: 'in-memory',
-    });
-    encoder = new VideoEncoder({
-      output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
-      error: (e) => { encodeError = e; },
-    });
-    encoder.configure(pick.config);
+    output = new Output({ format: new Mp4OutputFormat({ fastStart: 'in-memory' }), target: new BufferTarget() });
+    const source = new VideoSampleSource({ ...pick, quality: new Quality({ bitrate: 20e6 }), keyFrameInterval: 2 });
+    output.addVideoTrack(source, { frameRate: FPS });
+    await output.start();
 
     // With `fps` set, Hydra only draws on some ticks, and its canvas isn't preserved between draws.
     // Keep the last drawn frame and re-encode it on skipped ticks, so a low-fps sketch renders as it looks live.
     let lastDrawn = null;
     try {
       for (let i = 0; i < total && !job.cancelled; i++) {
-        if (encodeError) throw encodeError;
         pauseLooping();
         for (const p of paused) if (p5Instances.has(p) && p._setupDone) p.redraw();
         guardUpdate();
@@ -108,12 +102,9 @@ export async function renderVideo() {
         hydra.tick(1000 / FPS);
         // Capture in the same task as the draw: Hydra's WebGL canvas doesn't preserve its buffer.
         if (hydra.timeSinceLastUpdate === 0 || !lastDrawn) { lastDrawn?.close(); lastDrawn = new VideoFrame(canvas, { timestamp: 0 }); }
-        const frame = new VideoFrame(lastDrawn, { timestamp: Math.round(i * frameUs), duration: Math.round(frameUs) });
-        encoder.encode(frame, { keyFrame: i % (FPS * 2) === 0 });
-        frame.close();
-        while (encoder.encodeQueueSize > 4) {
-          await new Promise((r) => encoder.addEventListener('dequeue', r, { once: true }));
-        }
+        // The sample wraps (and closes) its own frame; add() awaits encoder backpressure and clones what it keeps.
+        const sample = new VideoSample(new VideoFrame(lastDrawn, { timestamp: Math.round(i * frameUs), duration: Math.round(frameUs) }));
+        try { await source.add(sample); } finally { sample.close(); }
         if (i % 6 === 0) {
           btn.textContent = `⏹ ${Math.floor((i / total) * 100)}%`;
           await yieldTask();
@@ -122,13 +113,11 @@ export async function renderVideo() {
     } finally {
       lastDrawn?.close();
     }
-    if (!job.cancelled) await encoder.flush();
-    if (encodeError) throw encodeError;
-    if (!job.cancelled) muxer.finalize();
+    if (!job.cancelled) await output.finalize();
   } catch (e) {
     failed = e;
   } finally {
-    if (encoder && encoder.state !== 'closed') encoder.close();
+    if (output && output.state !== 'finalized' && output.state !== 'canceled') await output.cancel();
     for (const p of paused) if (p5Instances.has(p)) p.loop(); // not ones removed mid-render
     rendering = null;
     resumeLive();
@@ -138,5 +127,5 @@ export async function renderVideo() {
   }
   if (failed) return setStatus(`render failed: ${failed.message ?? failed}`, true);
   if (job.cancelled) return setStatus('render cancelled');
-  download(new Blob([muxer.target.buffer], { type: 'video/mp4' }), 'mp4');
+  download(new Blob([output.target.buffer], { type: 'video/mp4' }), 'mp4');
 }
