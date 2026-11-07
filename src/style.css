@@ -24,10 +24,10 @@ button:disabled { opacity: .4; cursor: default; }
 #activity button { width: 48px; height: 48px; border: 0; border-left: 2px solid transparent; background: none; color: #858585; padding: 0; }
 #activity button:hover { color: #fff; }
 #activity button.on { color: #fff; border-left-color: #fff; }
-#explorer { width: 240px; flex: none; background: #252526; display: flex; flex-direction: column; overflow: hidden; }
-#explorer.closed { display: none; }
-#explorer header { display: flex; align-items: center; height: 35px; padding: 0 8px 0 20px; font-size: 11px; letter-spacing: .05em; color: #bbb; }
-#explorer header span { flex: 1; }
+#workbench aside { width: 240px; flex: none; background: #252526; display: flex; flex-direction: column; overflow: hidden; }
+#workbench aside.closed { display: none; }
+#workbench aside header { display: flex; align-items: center; height: 35px; padding: 0 8px 0 20px; font-size: 11px; letter-spacing: .05em; color: #bbb; }
+#workbench aside header span { flex: 1; }
 #explorer header button, #sketch-list button { border: 0; background: none; color: #ccc; padding: 0 4px; font-size: 15px; line-height: 1; }
 #explorer header button:hover, #sketch-list button:hover { color: #fff; }
 #sketch-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; }
@@ -42,6 +42,20 @@ button:disabled { opacity: .4; cursor: default; }
 #sketch-list input { flex: 1; min-width: 0; background: #3c3c3c; color: #fff; border: 1px solid #007fd4; outline: 0; font: inherit; padding: 0 4px; }
 #sketch-list input.invalid { border-color: #be1100; }
 #sketch-list .empty { padding: 4px 20px; color: #888; cursor: default; }
+#utilities { overflow-y: auto; }
+#utilities .utility { padding: 0 8px 8px 20px; display: flex; flex-direction: column; gap: 4px; }
+#utilities label { font-size: 12px; color: #999; }
+#utilities .row { display: flex; align-items: center; gap: 6px; }
+#utilities button { border: 0; background: none; color: #ccc; padding: 0 2px; font-size: 15px; line-height: 1; display: flex; }
+#utilities button:hover:not(:disabled) { color: #fff; }
+#color-hex { flex: 1; min-width: 0; background: #3c3c3c; color: #fff; border: 1px solid #3c3c3c; outline: 0; font: 13px monospace; padding: 1px 4px; }
+#color-hex:focus { border-color: #007fd4; }
+#color-hex.invalid { border-color: #be1100; }
+/* The color over a checkerboard, so alpha shows. --c is set by colors.js. */
+#color-swatch { width: 18px; height: 18px; flex: none; border: 1px solid #555; box-sizing: border-box;
+  background: linear-gradient(var(--c, transparent), var(--c, transparent)), repeating-conic-gradient(#777 0 25%, #bbb 0 50%) 0 0 / 8px 8px; }
+#color-out { flex: 1; min-width: 0; font: 13px monospace; color: #fff; overflow-wrap: anywhere; user-select: all; }
+#rainbow { width: 100%; height: 240px; aspect-ratio: auto; cursor: crosshair; touch-action: none; }
 
 #import-dialog { background: #252526; color: #ccc; border: 1px solid #444; max-width: 460px; font-family: system-ui, sans-serif; }
 #import-dialog::backdrop { background: #0008; }

@@ -1,9 +1,10 @@
 // The sketch explorer: list, inline naming, save/open/rename/delete, and their shortcuts.
 import { $, setStatus } from './status.js';
-import { KEY, readSketches, store } from './storage.js';
+import { KEY, readSketches } from './storage.js';
+import { isOpen, toggleView } from './sidebar.js';
 import { DEFAULT_CODE, editor, state, isDirty, saveBuffer, commit, run } from './workspace.js';
 
-const tab = $('tab'), list = $('sketch-list'), explorer = $('explorer');
+const tab = $('tab'), list = $('sketch-list');
 
 const claim = (s, name) => { if (s.has(name)) throw new Error(`"${name}" already exists`); };
 const confirmDiscard = () => !isDirty() || confirm(`Discard unsaved changes to "${state.current ?? 'untitled'}"?`);
@@ -72,7 +73,7 @@ function open(name) {
 // Inline VSCode-style name input. Replaces `li`'s contents (or prepends a new row).
 // Enter/blur commits, Escape cancels. onCommit receives a valid, unused name.
 function nameInput(initial, li, onCommit) {
-  if (explorer.classList.contains('closed')) toggleExplorer();
+  if (!isOpen('explorer')) toggleView('explorer');
   if (!li) { li = document.createElement('li'); list.prepend(li); }
   li.className = 'editing';
   li.onclick = li.ondblclick = null;
@@ -164,13 +165,6 @@ function remove(name) {
   render();
 }
 
-export function toggleExplorer() {
-  const closed = explorer.classList.toggle('closed');
-  $('toggle-explorer').classList.toggle('on', !closed);
-  store(KEY.explorer, closed ? 'closed' : 'open');
-  editor.refresh();
-}
-
 editor.on('change', () => { if (isDirty() !== wasDirty) render(); });
 
 // Another tab changed the sketches: pick them up. The open sketch, if deleted there, becomes untitled here.
@@ -187,5 +181,5 @@ document.addEventListener('keydown', (e) => {
   if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
   const k = e.key.toLowerCase();
   if (k === 's') { e.preventDefault(); e.shiftKey ? saveAs() : save(); }
-  else if (k === 'b' && !e.shiftKey) { e.preventDefault(); toggleExplorer(); }
+  else if (k === 'b' && !e.shiftKey) { e.preventDefault(); toggleView('explorer'); }
 });

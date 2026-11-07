@@ -15,11 +15,30 @@
     <button id="toggle-explorer" title="Sketches (Ctrl+B)">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 3H6v18h12V7z M14 3v4h4"/><path d="M9 3V1h8l4 4v13h-3"/></svg>
     </button>
+    <button id="toggle-utilities" title="Utilities">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+    </button>
   </nav>
   <aside id="explorer" class="closed">
     <header><span>SKETCHES</span><button id="import-sketches" title="Import sketches from a file">⇪</button><button id="export-sketches" title="Export all sketches to a file">⇩</button><button id="new-sketch" title="New sketch">+</button></header>
     <input id="import-file" type="file" accept=".json,application/json" hidden>
     <ul id="sketch-list"></ul>
+  </aside>
+  <aside id="utilities" class="closed">
+    <header><span>UTILITIES</span></header>
+    <div class="utility">
+      <label for="color-hex">Color</label>
+      <div class="row">
+        <button id="eyedropper" title="Pick a color from anywhere on screen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 4l5 5-2 2-5-5z M14 7l-9 9-1 4 4-1 9-9"/></svg></button>
+        <input id="color-hex" placeholder="#rrggbbaa or rgba(…)" spellcheck="false" autocomplete="off">
+        <span id="color-swatch"></span>
+      </div>
+      <canvas id="rainbow" width="200" height="360" title="Click or drag to pick a color"></canvas>
+      <div class="row">
+        <code id="color-out"></code>
+        <button id="copy-color" title="Copy">⧉</button>
+      </div>
+    </div>
   </aside>
   <div id="main">
     <div id="bar">

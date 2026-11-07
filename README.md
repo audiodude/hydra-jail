@@ -53,6 +53,12 @@ An import file is a JSON object of `{ "name": "code" }`, the same format the exp
 
 Sketches are shared between open tabs: a save in one shows up in the others, and a sketch deleted elsewhere becomes untitled in tabs that had it open. If the stored sketches can't be parsed, they're moved aside to a `hydra-jail:sketches:corrupt-<timestamp>` key rather than overwritten.
 
+## Utilities
+
+The wrench icon below the file icon opens the utilities in the sidebar, in place of the sketch list.
+
+**Color** converts a color to the numbers for Hydra's `.color()`, each channel scaled to 0–1: type or paste a hex color (`#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`) or `rgb()`/`rgba()`, or use the eyedropper to pick one from anywhere on screen (Chrome and Edge only). A rainbow below the input (hue top to bottom, white to black left to right) can be clicked or dragged across to pick a color. The result, e.g. `1, 0.502, 0, 1`, updates as you type; ⧉ copies it.
+
 ## Development
 
 All source lives in `src/`, including `src/index.html` (the markup and Vite's entry point; it doesn't work opened directly). Libraries come from npm and [Vite](https://vite.dev) bundles everything into `dist/index.html` with `vite-plugin-singlefile`.
@@ -64,6 +70,8 @@ All source lives in `src/`, including `src/index.html` (the markup and Vite's en
 | `src/workspace.js` | the editor, the open sketch, running code, buffer autosave |
 | `src/explorer.js` | the sketch explorer and its shortcuts |
 | `src/transfer.js` | sketch import and export |
+| `src/sidebar.js` | which sidebar view (Sketches or Utilities) is open |
+| `src/colors.js` | Utilities ▸ Color |
 | `src/storage.js` | the `localStorage` layout and safe read/write helpers |
 | `src/render.js` | ⏵ Render |
 | `src/yuv.js` | GPU conversion of rendered frames to video colour |

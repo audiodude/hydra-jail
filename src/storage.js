@@ -5,7 +5,7 @@ export const KEY = {
   buffer: 'hydra-jail:code',         // working buffer, autosaved as you type
   sketches: 'hydra-jail:sketches',   // { name: code }
   current: 'hydra-jail:current',     // name of the open sketch
-  explorer: 'hydra-jail:explorer',   // 'closed' when collapsed
+  sidebar: 'hydra-jail:explorer',    // open sidebar view ('explorer', 'utilities') or 'closed'; old key name, so saved state carries over
   renderDepth: 'hydra-jail:render-depth', // '10' for 10-bit VP9 renders
   renderSize: 'hydra-jail:render-size',   // '2160' for 4K renders
   running: 'hydra-jail:running',     // sessionStorage: set while a run might still hang the page

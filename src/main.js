@@ -3,15 +3,18 @@ import './hydra.js'; // first: sets up Hydra's globals and the tracked window.p5
 import { $, setStatus } from './status.js';
 import { KEY, store } from './storage.js';
 import { editor, run, lastRunHung, startupError } from './workspace.js';
-import { render, newSketch, toggleExplorer } from './explorer.js';
+import { render, newSketch } from './explorer.js';
+import { restoreSidebar, toggleView } from './sidebar.js';
 import { renderVideo, updateSizeOptions } from './render.js';
 import { exportSketches, importSketches } from './transfer.js';
+import './colors.js';
 import './style.css'; // after the modules, so it overrides CodeMirror's own CSS (same selectors)
 
 $('render').onclick = renderVideo;
 $('run').onclick = run;
 $('new-sketch').onclick = newSketch;
-$('toggle-explorer').onclick = toggleExplorer;
+$('toggle-explorer').onclick = () => toggleView('explorer');
+$('toggle-utilities').onclick = () => toggleView('utilities');
 $('export-sketches').onclick = exportSketches;
 $('import-sketches').onclick = () => $('import-file').click();
 $('import-file').onchange = (e) => {
@@ -34,8 +37,7 @@ const checkSizes = () => updateSizeOptions(localStorage.getItem(KEY.renderSize))
 $('render-depth').addEventListener('change', checkSizes);
 checkSizes();
 
-if (localStorage.getItem(KEY.explorer) !== 'closed') toggleExplorer();
-else editor.refresh();
+restoreSidebar();
 render();
 if (lastRunHung()) setStatus('auto-run skipped: the last run hung or crashed the page. Fix the code, then Run.', true);
 else run();
