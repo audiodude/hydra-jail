@@ -8,9 +8,9 @@
 <div id="stage"><canvas id="hydra"></canvas></div>
 <div id="bar">
   <span id="tab"></span>
-  <span id="status">Ctrl+Shift+Enter to run</span>
+  <button id="run">Run</button>
   <button id="scale" title="Toggle between fit-to-window and 1:1 pixels">1:1</button>
-  <input id="render-secs" type="number" value="10" min="1" step="1" title="Render length in seconds">
+  <label id="render-len" title="Render length in seconds"><input id="render-secs" type="number" value="10" min="1" step="1"> s</label>
   <select id="render-size" title="Render size. 4K takes about 4× as long; uploading 4K also gets better quality from YouTube">
     <option value="1080">1080p</option>
     <option value="2160">4K</option>
@@ -20,7 +20,7 @@
     <option value="10">10-bit VP9</option>
   </select>
   <button id="render" title="Frame-exact 60fps render to .mp4 (may run slower than real time)">⏵ Render</button>
-  <button id="run">Run</button>
+  <span id="status">Ctrl+Shift+Enter to run</span>
 </div>
 <div id="workbench">
   <nav id="activity">

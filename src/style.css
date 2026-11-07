@@ -7,16 +7,20 @@ html, body { margin: 0; background: #111; color: #ccc; font: 13px/1.4 monospace;
 #stage { width: 100%; max-width: 1920px; margin: 0 auto; }
 #stage.actual { width: 1920px; max-width: none; }
 canvas { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; }
-#bar { display: flex; gap: 12px; align-items: center; max-width: 1920px; margin: 0 auto; padding: 4px 8px; box-sizing: border-box; }
-#tab { color: #fff; }
+#bar { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; max-width: 1920px; margin: 0 auto; padding: 4px 8px; box-sizing: border-box; }
+/* With the sidebar open, the name fills the space above it (48 + 240px, minus padding and gap),
+   so Run lines up with the editor's left edge. */
+#tab { color: #fff; flex: none; width: 268px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body:has(#explorer.closed) #tab { width: auto; max-width: 268px; }
 #tab.dirty::after { content: ' ●'; color: #aaa; }
-#status { flex: 1; white-space: pre-wrap; }
+#status { flex-basis: 100%; white-space: pre-wrap; } /* its own row, so long errors don't squeeze the controls */
 #status.err { color: #f66; }
 button { background: #222; color: #ccc; border: 1px solid #444; font: inherit; padding: 2px 8px; cursor: pointer; }
 button:disabled { opacity: .4; cursor: default; }
 #render.on { color: #fff; background: #a00; border-color: #f44; }
 #render-secs, #render-depth, #render-size { background: #222; color: #ccc; border: 1px solid #444; font: inherit; padding: 2px 4px; }
 #render-secs { width: 4em; }
+#render-len { display: flex; align-items: center; gap: 4px; margin-left: auto; } /* render controls go right */
 
 #workbench { display: flex; height: 40vh; max-width: 1920px; margin: 0 auto; font-family: system-ui, sans-serif; }
 #activity { width: 48px; flex: none; background: #333; display: flex; flex-direction: column; align-items: center; }
