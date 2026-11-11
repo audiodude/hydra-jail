@@ -7,6 +7,8 @@ cd "$(dirname "$0")"
 
 PROJECT=hydra-jail
 DOMAIN=hydra-jail.audiodude.xyz
+# Where s0.initImage('name.jpg') loads from; override by setting VITE_IMAGE_HOST before running.
+export VITE_IMAGE_HOST="${VITE_IMAGE_HOST-img.hydra-jail.audiodude.xyz/img}"
 export CLOUDFLARE_ACCOUNT_ID=059181f68081f9c0fb55c5c77a969c11
 if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
   [[ -f ~/.secrets ]] && source ~/.secrets

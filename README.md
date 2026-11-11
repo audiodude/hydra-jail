@@ -30,6 +30,17 @@ s0.init({ src: p.canvas });
 src(s0).modulate(osc(3), 0.1).out()
 ```
 
+## Images
+
+If the build sets `VITE_IMAGE_HOST` (a host plus optional path, e.g. `img.hydra-jail.audiodude.xyz/img`; `https://` is assumed), `initImage` resolves bare filenames against it:
+
+```js
+s0.initImage('foo_bar.jpg') // loads https://img.hydra-jail.audiodude.xyz/img/foo_bar.jpg
+src(s0).out()
+```
+
+Full URLs (`https://…`, `//…`, `data:`, `blob:`) pass through unchanged, as does everything when the variable is unset. `./deploy.sh` sets it to `img.hydra-jail.audiodude.xyz/img` unless you set it yourself; a plain `npm run build` leaves it unset. The image host must send `Access-Control-Allow-Origin` (Hydra loads images as `crossOrigin = 'anonymous'` for WebGL), or the image won't load.
+
 ## Sketches
 
 A VSCode-style explorer sits left of the editor; sketches are stored in `localStorage`.

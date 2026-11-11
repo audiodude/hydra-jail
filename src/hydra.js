@@ -15,6 +15,19 @@ canvas.height = HEIGHT;
 // We drive the loop ourselves so the offline renderer can pause it and step time exactly.
 export const hydra = new Hydra({ canvas, width: WIDTH, height: HEIGHT, detectAudio: false, makeGlobal: true, autoLoop: false });
 
+// s0.initImage('foo.jpg') loads from the image host baked in at build time (VITE_IMAGE_HOST, e.g.
+// `img.example.com/img`): a URL with a scheme (https:, data:, blob:) or starting with `//` is left alone.
+const imageHost = (import.meta.env.VITE_IMAGE_HOST ?? '').trim().replace(/\/+$/, '');
+const imageBase = imageHost && (/^[a-z][a-z\d+.-]*:\/\//i.test(imageHost) ? imageHost : `https://${imageHost}`);
+function resolveImage(url) {
+  if (!imageBase || typeof url !== 'string' || url === '' || /^([a-z][a-z\d+.-]*:|\/\/)/i.test(url)) return url;
+  return `${imageBase}/${url.replace(/^\/+/, '')}`;
+}
+for (const source of hydra.s) {
+  const initImage = source.initImage;
+  source.initImage = (url, params) => initImage.call(source, resolveImage(url), params);
+}
+
 let paused = false;
 let lastFrame = performance.now();
 requestAnimationFrame(function frame(now) {
