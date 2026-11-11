@@ -41,6 +41,12 @@ src(s0).out()
 
 Full URLs (`https://…`, `//…`, `data:`, `blob:`) pass through unchanged, as does everything when the variable is unset. `./deploy.sh` sets it to `img.hydra-jail.audiodude.xyz/img` unless you set it yourself; a plain `npm run build` leaves it unset. The image host must send `Access-Control-Allow-Origin` (Hydra loads images as `crossOrigin = 'anonymous'` for WebGL), or the image won't load.
 
+The image host is the R2 bucket `hydra-jail-img`, served at `img.hydra-jail.audiodude.xyz` (an R2 custom domain) with a CORS rule allowing `GET`/`HEAD` from any origin. `*` rather than this site's origin, so a downloaded copy opened from `file://` (origin `null`) can load images too. Object keys are the URL path, so upload under `img/`:
+
+```sh
+npx wrangler r2 object put hydra-jail-img/img/foo_bar.jpg --file foo_bar.jpg --remote
+```
+
 ## Sketches
 
 A VSCode-style explorer sits left of the editor; sketches are stored in `localStorage`.
