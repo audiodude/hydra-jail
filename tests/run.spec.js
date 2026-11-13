@@ -24,3 +24,14 @@ for (const [what, code, message] of [
     await expect(status(page)).toHaveClass('err');
   });
 }
+
+test('open in Hydra passes the code in a URL hydra.ojack.xyz decodes back to it', async ({ page }) => {
+  await openApp(page);
+  await page.evaluate(() => { window.open = (url) => { window.__opened = url; }; });
+  const code = 'osc(10, 0.1, 1.2).out() // ünïcode ✓ & ?=+/';
+  await setCode(page, code);
+  await page.click('#open-hydra');
+  const url = new URL(await page.evaluate(() => window.__opened));
+  expect(url.origin + url.pathname).toBe('https://hydra.ojack.xyz/');
+  expect(decodeURIComponent(atob(url.searchParams.get('code')))).toBe(code);
+});

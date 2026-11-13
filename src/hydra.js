@@ -19,7 +19,7 @@ export const hydra = new Hydra({ canvas, width: WIDTH, height: HEIGHT, detectAud
 // `img.example.com/img`): a URL with a scheme (https:, data:, blob:) or starting with `//` is left alone.
 const imageHost = (import.meta.env.VITE_IMAGE_HOST ?? '').trim().replace(/\/+$/, '');
 const imageBase = imageHost && (/^[a-z][a-z\d+.-]*:\/\//i.test(imageHost) ? imageHost : `https://${imageHost}`);
-function resolveImage(url) {
+export function resolveImage(url) {
   if (!imageBase || typeof url !== 'string' || url === '' || /^([a-z][a-z\d+.-]*:|\/\/)/i.test(url)) return url;
   return `${imageBase}/${url.replace(/^\/+/, '')}`;
 }

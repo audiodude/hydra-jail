@@ -1,5 +1,5 @@
 // Entry point. Everything is module-scoped: Hydra's makeGlobal overwrites window globals like `render`.
-import './hydra.js'; // first: sets up Hydra's globals and the tracked window.p5 before any sketch runs
+import { resolveImage } from './hydra.js'; // first: sets up Hydra's globals and the tracked window.p5 before any sketch runs
 import { $, setStatus } from './status.js';
 import { KEY, store } from './storage.js';
 import { editor, run, lastRunHung, startupError } from './workspace.js';
@@ -25,6 +25,13 @@ $('import-file').onchange = (e) => {
 $('scale').onclick = (e) => {
   const actual = $('stage').classList.toggle('actual');
   e.target.textContent = actual ? 'fit' : '1:1';
+};
+// hydra.ojack.xyz runs ?code=btoa(encodeURIComponent(code)) on load. It has no image host, so bare
+// initImage('foo.jpg') names are rewritten to the full URLs they load from here.
+$('open-hydra').onclick = () => {
+  const code = editor.getValue().replace(/(\.initImage\(\s*)(['"])([^'"\\\n]*)\2/g,
+    (_, call, q, url) => call + q + resolveImage(url) + q);
+  window.open(`https://hydra.ojack.xyz/?code=${encodeURIComponent(btoa(encodeURIComponent(code)))}`, '_blank', 'noopener');
 };
 // Render menus remember their choice.
 for (const [id, key] of [['render-depth', KEY.renderDepth], ['render-size', KEY.renderSize]]) {

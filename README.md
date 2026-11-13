@@ -6,6 +6,7 @@ The app builds to a single self-contained file, `dist/index.html` (about 1.5 MB,
 
 - **Ctrl+Shift+Enter** (Cmd+Shift+Enter on macOS) or **Run**: evaluate the editor contents.
 - **1:1 / fit**: show the canvas at real pixel size or scaled to the window. It always draws at 1920×1080 either way (except during a 4K render).
+- **open in Hydra**: opens the editor's code in the [Hydra web editor](https://hydra.ojack.xyz) in a new tab, with bare `initImage` names rewritten to full image-host URLs. p5 sketches may not run there as-is, since Hydra's editor provides p5 its own way (`new P5()`).
 - The working buffer autosaves to `localStorage` as you type, and reloads with the page.
 - If a run hangs or crashes the page, the next load skips the auto-run so you can fix the code.
 - Mic input (`a.fft`) is off (`detectAudio: false`), so there's no permission prompt.
@@ -41,11 +42,14 @@ src(s0).out()
 
 Full URLs (`https://…`, `//…`, `data:`, `blob:`) pass through unchanged, as does everything when the variable is unset. `./deploy.sh` sets it to `img.hydra-jail.audiodude.xyz/img` unless you set it yourself; a plain `npm run build` leaves it unset. The image host must send `Access-Control-Allow-Origin` (Hydra loads images as `crossOrigin = 'anonymous'` for WebGL), or the image won't load.
 
-The image host is the R2 bucket `hydra-jail-img`, served at `img.hydra-jail.audiodude.xyz` (an R2 custom domain) with a CORS rule allowing `GET`/`HEAD` from any origin. `*` rather than this site's origin, so a downloaded copy opened from `file://` (origin `null`) can load images too. Object keys are the URL path, so upload under `img/`:
+The image host is the R2 bucket `hydra-jail-img`, served at `img.hydra-jail.audiodude.xyz` (an R2 custom domain) with a CORS rule allowing `GET`/`HEAD` from any origin. `*` rather than this site's origin, so a downloaded copy opened from `file://` (origin `null`) can load images too. Object keys are the URL path, so images live under `img/`. Upload with:
 
 ```sh
-npx wrangler r2 object put hydra-jail-img/img/foo_bar.jpg --file foo_bar.jpg --remote
+scripts/cp-image.sh foo_bar.jpg more/*.png   # each to img/<filename>, overwriting
+scripts/cp-image.sh -l poster.jpg            # --letterbox: pad with black bars to 16:9 first (needs ImageMagick 7)
 ```
+
+The script uploads with `Cache-Control: no-cache`, so browsers check with the host on every load (a cheap `304` if unchanged) and a re-uploaded image shows up on the next run, no `?v=2` needed.
 
 ## Sketches
 
