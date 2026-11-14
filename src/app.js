@@ -9,6 +9,7 @@ import { renderVideo, updateSizeOptions } from './render.js';
 import { exportSketches, importSketches } from './transfer.js';
 import './colors.js';
 import { demoUrl, encodeCode } from './share.js';
+import { micOn, startMic, stopMic } from './mic.js';
 import './style.css'; // after the modules, so it overrides CodeMirror's own CSS (same selectors)
 
 $('render').onclick = renderVideo;
@@ -35,6 +36,19 @@ $('open-hydra').onclick = () => {
   window.open(`https://hydra.ojack.xyz/?code=${encodeCode(code)}`, '_blank', 'noopener');
 };
 $('demo').onclick = () => window.open(demoUrl(editor.getValue()), '_blank', 'noopener');
+$('mic').onclick = async (e) => {
+  const button = e.currentTarget;
+  button.disabled = true;
+  try {
+    if (micOn()) stopMic();
+    else await startMic();
+  } catch (err) {
+    setStatus(`mic: ${err.message ?? err}`, true);
+  }
+  button.disabled = false;
+  button.textContent = micOn() ? 'mic on' : 'mic off';
+  button.classList.toggle('on', micOn());
+};
 // Render menus remember their choice.
 for (const [id, key] of [['render-depth', KEY.renderDepth], ['render-size', KEY.renderSize]]) {
   const menu = $(id), saved = localStorage.getItem(key);

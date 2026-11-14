@@ -13,7 +13,17 @@ canvas.height = HEIGHT;
 
 // makeGlobal puts Hydra's functions (osc, src, time, render, ...) on window, where sketches run.
 // We drive the loop ourselves so the offline renderer can pause it and step time exactly.
-export const hydra = new Hydra({ canvas, width: WIDTH, height: HEIGHT, detectAudio: false, makeGlobal: true, autoLoop: false });
+// Audio starts silent: Hydra builds its own `a`, but with navigator.mediaDevices hidden it skips the mic
+// prompt, so a.fft stays 0 while a.setBins, a.onBeat, a.show, a0() etc. all work. mic.js attaches the mic on request.
+export const hydra = (() => {
+  Object.defineProperty(navigator, 'mediaDevices', { value: undefined, configurable: true });
+  try {
+    return new Hydra({ canvas, width: WIDTH, height: HEIGHT, detectAudio: true, makeGlobal: true, autoLoop: false });
+  } finally {
+    delete navigator.mediaDevices; // unshadow the real getter on Navigator.prototype
+  }
+})();
+hydra.synth.a.hide(); // Hydra's bin meter canvas: hidden until a sketch calls a.show()
 
 // s0.initImage('foo.jpg') loads from the image host baked in at build time (VITE_IMAGE_HOST, e.g.
 // `img.example.com/img`): a URL with a scheme (https:, data:, blob:) or starting with `//` is left alone.

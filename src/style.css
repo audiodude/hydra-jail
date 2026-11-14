@@ -4,7 +4,7 @@
 @font-face { font-family: 'Ubuntu Mono'; font-style: italic; font-weight: 400; font-display: swap; src: url('@fontsource/ubuntu-mono/files/ubuntu-mono-latin-400-italic.woff') format('woff'); }
 
 html, body { margin: 0; background: #111; color: #ccc; font: 13px/1.4 monospace; }
-#stage { width: 100%; max-width: 1920px; margin: 0 auto; }
+#stage { position: relative; width: 100%; max-width: 1920px; margin: 0 auto; } /* relative: anchors a.show()'s bin meter to the canvas corner */
 #stage.actual { width: 1920px; max-width: none; }
 canvas { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; }
 #statusbar { display: flex; gap: 12px; max-width: 1920px; margin: 0 auto; padding: 4px 8px; box-sizing: border-box; }
@@ -15,6 +15,7 @@ canvas { display: block; width: 100%; aspect-ratio: 16 / 9; background: #000; }
 button { background: #222; color: #ccc; border: 1px solid #444; font: inherit; padding: 2px 8px; cursor: pointer; }
 button:disabled { opacity: .4; cursor: default; }
 #render.on { color: #fff; background: #a00; border-color: #f44; }
+#mic.on { color: #fff; background: #050; border-color: #4c4; }
 #render-secs, #render-depth, #render-size { background: #222; color: #ccc; border: 1px solid #444; font: inherit; padding: 2px 4px; }
 #render-secs { width: 4em; }
 #render-len { display: flex; align-items: center; gap: 4px; margin-left: auto; } /* render controls go right */

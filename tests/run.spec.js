@@ -25,6 +25,16 @@ for (const [what, code, message] of [
   });
 }
 
+test('audio sketches run silently with the mic off', async ({ page }) => {
+  await openApp(page);
+  await setCode(page, `a.setBins(8); a.setSmooth(0.8); a.onBeat = () => {};
+osc(() => 10 + 20 * a.fft[7]).scale(a0(0.5, 1)).out(); update = () => { window.__fft = a.fft.slice() }`);
+  await page.click('#run');
+  await expect.poll(() => page.evaluate(() => window.__fft)).toEqual(Array(8).fill(0));
+  await expect(status(page)).not.toHaveClass('err');
+  await expect(page.locator('#mic')).toHaveText('mic off');
+});
+
 test('open in Hydra passes the code in a URL hydra.ojack.xyz decodes back to it', async ({ page }) => {
   await openApp(page);
   await page.evaluate(() => { window.open = (url) => { window.__opened = url; }; });
