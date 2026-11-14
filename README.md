@@ -7,6 +7,7 @@ The app builds to a single self-contained file, `dist/index.html` (about 1.5 MB,
 - **Ctrl+Shift+Enter** (Cmd+Shift+Enter on macOS) or **Run**: evaluate the editor contents.
 - **1:1 / fit**: show the canvas at real pixel size or scaled to the window. It always draws at 1920×1080 either way (except during a 4K render).
 - **open in Hydra**: opens the editor's code in the [Hydra web editor](https://hydra.ojack.xyz) in a new tab, with bare `initImage` names rewritten to full image-host URLs. p5 sketches may not run there as-is, since Hydra's editor provides p5 its own way (`new P5()`).
+- **demo**: opens the editor's code in a new tab as a demo: just the canvas, as large as fits the window, running the code. Share that link to show a sketch. Any `?code=` link works the same way, in [Hydra's own format](https://hydra.ojack.xyz) (`btoa(encodeURIComponent(code))`), so a hydra.ojack.xyz link plays here with its host swapped. A demo never reads or writes `localStorage`, so it leaves your buffer and sketches alone; code and decode errors show at the bottom.
 - The working buffer autosaves to `localStorage` as you type, and reloads with the page.
 - If a run hangs or crashes the page, the next load skips the auto-run so you can fix the code.
 - Mic input (`a.fft`) is off (`detectAudio: false`), so there's no permission prompt.
@@ -86,7 +87,9 @@ All source lives in `src/`, including `src/index.html` (the markup and Vite's en
 
 | File | Contents |
 | --- | --- |
-| `src/main.js` | entry point: button wiring, startup and auto-run |
+| `src/main.js` | entry point: loads the demo view for `?code=`, otherwise the editor |
+| `src/app.js` | the editor app: button wiring, startup and auto-run |
+| `src/demo.js`, `src/share.js` | the `?code=` demo view; encoding code into links |
 | `src/hydra.js` | Hydra, the frame loop, p5 instance tracking, runtime error capture |
 | `src/workspace.js` | the editor, the open sketch, running code, buffer autosave |
 | `src/explorer.js` | the sketch explorer and its shortcuts |

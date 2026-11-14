@@ -68,3 +68,10 @@ button:disabled { opacity: .4; cursor: default; }
 #bar { display: flex; gap: 12px; align-items: center; padding: 4px 8px; background: #111; font: 13px/1.4 monospace; }
 #editor { flex: 1; min-height: 0; }
 .CodeMirror { height: 100%; font-family: 'Ubuntu Mono', monospace; font-size: 17px; }
+
+/* Demo view (?code=): the canvas as large as fits the window, centred on black; the status bar only for errors. */
+body.demo { background: #000; height: 100vh; display: grid; place-content: center; overflow: hidden; }
+body.demo #workbench { display: none; }
+body.demo #stage { width: min(100vw, 100vh * 16 / 9); }
+body.demo #statusbar { position: fixed; bottom: 0; left: 0; right: 0; max-width: none; background: #000c; }
+body.demo #statusbar:not(:has(.err)) { display: none; }
